@@ -38,6 +38,21 @@ app.use(express.urlencoded({ extended: true }));
 
 // auth router attaches /login, /logout, and /callback routes to the baseURL
 app.use(auth(config));
+app.use(async (req, res, next) => {
+  const userData = req.oidc.user;
+  if (userData) {
+    const [user] = await User.findOrCreate({
+      where: { email: userData.email },
+      defaults: {
+        username: userData.nickname,
+        name: userData.name,
+        email: userData.email,
+        password: "password",
+      },
+    });
+  }
+  next();
+});
 
 app.get("/", (req, res) => {
   const user = req.oidc.user;
